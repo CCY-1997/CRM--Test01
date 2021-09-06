@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bjpowernode.dao.StudentDao">
+    <!-- id都必须写，除了select中parameterType的简单类型可以不写，resultType必须写，其余的都不写 -->
+
+    <!--
+        使用在sql语句中的符号
+            （1）#{}：表示占位符，可以有效防止sql注入(PreparedStatement)。使用#{}设置参数无需考虑参数的类型。
+            （2）'${}'：表示拼接符，无法防止sql注入(Statement)。使用${}设置参数必须考虑参数的类型。
+
+            模糊查询 拼接字符串用 空格：'%' 空格#{name}空格 '%'
+    -->
+
+
+    <select id="getById" parameterType="String" resultType="com.bjpowernode.domain.Student">
+        select * from tbl_student where id=#{id}
+    </select>
+
+    <insert id="save">
+        insert into tbl_student(id,name,age) values(#{id},#{name},#{age})
+    </insert>
+
+    <select id="getAll" resultType="Student">
+        select * from tbl_student
+    </select>
+
+    <select id="select1" parameterType="String" resultType="Student">
+        select * from tbl_student where id=#{id}
+    </select>
+
+    <select id="select2" parameterType="int" resultType="Student">
+        select * from tbl_student where age=#{age}
+    </select>
+
+    <!--<select id="select3" parameterType="" resultType="Student">
+        select * from tbl_student where name=#{name} and age=#{age}
+    </select>-->
+
+    <!--
+        如果我们为sql语句传递的参数类型为一个domain引用类型
+        那么#{}中的标识符必须是domain类的属性名
+    -->
+    <!--<select id="select4" resultType="Student">
+        select * from tbl_student where name=#{name} and age=#{age}
+    </select>-->
+
+    <!--
+        如果我们为SQL语句传递的参数类型为一个map类型
+        那么#{}中的标识符必须是map的key
+    -->
+    <select id="select5" resultType="Student">
+        select * from tbl_student where name=#{name} and age=#{age}
+    </select>
+
+    <select id="select6" resultType="Student">
+        select * from tbl_student where name like '%' #{name} '%'
+    </select>
+
+    <select id="select7" resultType="String">
+        select name from tbl_student where id=#{id}
+    </select>
+
+    <select id="select8" resultType="String">
+        select name from tbl_student
+    </select>
+
+    <select id="select9" resultType="int">
+        select count(*) from tbl_student
+    </select>
+
+    <select id="select10" resultType="map">
+        select * from tbl_student
+    </select>
+
+    <!--<select id="select11" resultType="Student">
+        select id,fullname as name,age from tbl_student
+    </select>-->
+
+    <!--
+        id：resultMap标签对的唯一标识
+                将来在使用该resultMap标签的时候，使用id来找到这组标签
+        type：指定一个类型，与数据库表一一对应，建立起表字段和类属性的名字一一匹配的关系
+     -->
+    <resultMap id="stuMap" type="Student">
+        <!--
+            id标签：是用来配置主键的对应关系的
+            result标签：用来配置普通字段对应关系的
+
+            对于tbl_student表，表结构是一个id，两个普通字段
+            所以我们需要一个id标签，两个result标签
+
+            property属性：配置的是类中的属性名
+            column属性：配置的是表中的字段名
+
+            这样就能够建立起类属性和表字段一一对应的关系了
+        -->
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="age" column="age"/>
+    </resultMap>
+
+    <select id="select12" resultMap="stuMap">
+        select * from tbl_student
+    </select>
+
+    <select id="" resultType="Student">
+        select * from tbl_student
+        <!--
+            where标签：
+                当where标签在使用的时候，必须要搭配where标签对中的if标签来使用
+                通过if标签的判断，如果有查询条件，则展现where关键字，如果没有查询条件则不展现where关键字
+
+                where标签会自动的屏蔽第一个李拦截符 and/or
+
+            ====================================================================
+            foreach标签：用来遍历传递来的数组桉树
+            collection：表示传递参数的类型
+                        array：数组
+                        list：集合
+            item：每一次遍历出来的元素，在使用该元素的时候，需要套用在#{}中
+            open：拼接循环的开始符号
+            close：拼接循环的结束符号
+            separator：元素与元素之间的分隔符
+    <foreach collection="array" item="id" open="(" close=")" separator=",">
+            #{id}
+    </foreach>
+        -->
+
+        <where>
+            <if test="name!=null and name!=''">
+                name like '%' #{name} '%'
+            </if>
+
+            <if test="address!=null and address!=''">
+                and address like '%' #{address} '%'
+            </if>
+
+        </where>
+    </select>
+
+    <!--
+        使用sql标签制作sql片段
+        sql片段的作用是用来代替sql语句中的代码
+
+            id：sql片段的唯一标识
+
+            <include refid="sql片段id值"/>
+
+        将来实际项目开发中，使用sql片段用来代替重复率高，且复杂的子查询。
+
+    -->
+    <sql id="sql1">
+        select * from tbl_student
+    </sql>
+
+
+    <select id="select13" resultType="Student">
+        <include refid="sql1"/> where id=#{id}
+    </select>
+
+    <select id="select14" resultType="map">
+        select  s.name as sname,c.name as cname
+        from tbl_student s
+        join tbl_classroom c
+        on s.classroomId = c.id
+    </select>
+
+    <select id="select15" resultType="com.bjpowernode.vo.StudentAndClassroomVO">
+        select s.id sid,s.name sname,s.age sage,c.id cid,c.name cname
+        from tbl_student s
+        join tbl_classroom c
+        on s.classroomId=c.id
+    </select>
+
+    <select id="select16" resultType="com.bjpowernode.vo.StudentAndClassroomVO">
+        select s.id sid,s.name sname,s.age sage,c.id cid,c.name cname
+        from tbl_student s
+        join tbl_classroom c
+        on s.classroomId=c.id
+        where s.name like '%' #{name} '%'
+    </select>
+
+
+</mapper>
